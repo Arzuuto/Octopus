@@ -1,0 +1,103 @@
+
+- name: Get All Packages information
+  ansible.builtin.package_facts:
+    manager: auto
+
+
+- name: Install required package for postgreSQL 12
+  become: yes
+  apt:
+    name:
+      - gnupg
+      - wget
+      - acl
+      - python3-psycopg2
+  when: "'postgresql-12' not in ansible_facts.packages"
+
+
+- name: Add Apt key for postgreSQL 12
+  become: yes
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+  when: "'postgresql-12' not in ansible_facts.packages"
+
+- name: Setting up PostgreSQL 12 Repo
+  become: yes
+  apt_repository:
+    repo: deb http://apt.postgresql.org/pub/repos/apt/ buster-pgdg main
+    state: present
+  when: "'postgresql-12' not in ansible_facts.packages"
+
+
+- name: Install postgreSQL 12
+  become: yes
+  apt:
+    update_cache: yes
+    name: postgresql-12
+  when: "'postgresql-12' not in ansible_facts.packages"
+
+
+- name: Ensure PostgreSQL 12 is running
+  become: yes
+  systemd:
+    name: postgresql
+    enabled: yes
+  when: "'postgresql-12' not in ansible_facts.packages"
+
+- name: Allow other servers to connect to database
+  become: yes
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/12/main/postgresql.conf
+    line: "listen_addresses = '*'"
+  when: "'postgresql-12' not in ansible_facts.packages"
+
+
+- name: Create pg_hba conf file
+  become: yes
+  template:
+    src: ./roles/postgresql/files/pg_hba.conf
+    dest: /etc/postgresql/12/main/pg_hba.conf
+  register: pg_hba
+
+
+- name: Restart PostgreSQL 12
+  become: yes
+  systemd:
+    name: postgresql
+    state: restarted
+  when: pg_hba.changed
+
+
+- name: Create user '{{ postgresql_user }}' in postgreSQL
+  postgresql_user:
+    name: '{{  postgresql_user  }}'
+    password: '{{  postgresql_password  }}'
+    role_attr_flags: CREATEDB,NOSUPERUSER
+  become: yes
+  become_user: postgres
+
+
+- name: Create Database '{{  postgresql_db  }}' in postgreSQL
+  postgresql_db:
+    state: present
+    name: '{{  postgresql_db  }}'
+  become: yes
+  become_user: postgres
+
+
+- name: Copy schema.sql
+  become: yes
+  copy:
+    src: ./roles/postgresql/files/schema.sql
+    dest: ./schema.sql
+    owner: root
+    group: root
+    mode: preserve
+  register: schema
+
+
+- name: Import schema.sql to database '{{  postgresql_user  }}'
+  shell: |
+    psql -U '{{  postgresql_user  }}' -d '{{  postgresql_db  }}' -f schema.sql
+  become: yes
+  when: schema.changed

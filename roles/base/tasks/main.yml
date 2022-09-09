@@ -1,0 +1,17 @@
+- name: Update package list
+  become: yes
+  apt:
+    update_cache: yes 
+    force_apt_get: yes
+    cache_valid_time: 3600
+
+
+- name: Install essential packages (using apt)
+  become: yes
+  apt:
+    name: build-essential
+
+- name: Set timezone to Europe/paris
+  become: yes
+  timezone:
+    name: Europe/Paris

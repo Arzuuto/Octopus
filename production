@@ -1,0 +1,21 @@
+[postgresql_server]
+postgreSQL ansible_host=localhost ansible_port=2222 ansible_user='vagrant' ansible_ssh_private_key_file='/home/Arzuto/Rendu/tek2/octopus/.vagrant/machines/postgreSQL/virtualbox/private_key'
+
+[redis_server]
+Redis ansible_host=localhost ansible_port=2200 ansible_user='vagrant' ansible_ssh_private_key_file='/home/Arzuto/Rendu/tek2/octopus/.vagrant/machines/Redis/virtualbox/private_key'
+
+[result_server]
+Result ansible_host=localhost ansible_port=2201 ansible_user='vagrant' ansible_ssh_private_key_file='/home/Arzuto/Rendu/tek2/octopus/.vagrant/machines/Result/virtualbox/private_key'
+
+[poll_server]
+Poll ansible_host=localhost ansible_port=2202 ansible_user='vagrant' ansible_ssh_private_key_file='/home/Arzuto/Rendu/tek2/octopus/.vagrant/machines/Poll/virtualbox/private_key'
+
+[worker_server]
+Worker ansible_host=localhost ansible_port=2203 ansible_user='vagrant' ansible_ssh_private_key_file='/home/Arzuto/Rendu/tek2/octopus/.vagrant/machines/Worker/virtualbox/private_key'
+
+[all:children]
+result_server
+poll_server
+worker_server
+redis_server
+postgresql_server

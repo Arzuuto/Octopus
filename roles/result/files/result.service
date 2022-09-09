@@ -1,0 +1,18 @@
+[Unit]
+Description= Result service
+After=network.target
+
+[Service]
+Environment=PORT={{result_port}}
+Environment=POSTGRESQL_USER={{postgresql_user}}
+Environment=POSTGRESQL_PASSWORD={{postgresql_password}}
+Environment=POSTGRESQL_HOST={{postgresql_host}}
+Environment=POSTGRESQL_PORT={{postgresql_port}}
+Environment=POSTGRESQL_DB={{postgresql_db}}
+Type=simple
+User=root
+ExecStart=/usr/bin/node /home/vagrant/result/server.js
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

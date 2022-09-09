@@ -1,0 +1,49 @@
+- name: Get All Packages information in the machine
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Create poll service file
+  become: yes
+  template:
+    src: ./roles/poll/files/poll.service
+    dest: /etc/systemd/system/poll.service
+  register: service
+
+- name: Extract poll.tar
+  become: yes
+  unarchive:
+    src: ./poll.tar
+    dest: ./
+  register: file
+
+- name: Install Python
+  become: yes
+  apt:
+    name:
+      - python3
+      - python3-pip
+  when: "'Python3' not in ansible_facts.packages"
+
+- name: Install specified python requirements
+  become: yes
+  shell: pip3 install -r poll/requirements.txt
+  when: file.changed
+
+
+- name: enable poll.service
+  become: yes
+  ansible.builtin.systemd:
+    name: poll.service
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  when: service.changed
+
+
+- name: start poll.service
+  become: yes
+  ansible.builtin.systemd:
+    name: poll
+    enabled: yes
+    state: started
+  when: service.changed

@@ -1,0 +1,56 @@
+- name: Get All Packages information in the machine
+  ansible.builtin.package_facts:
+    manager: auto
+
+
+- name: Add Redis 6 signing key, uses whichever key is at the URL
+  become: yes
+  ansible.builtin.apt_key:
+    url: https://packages.redis.io/gpg
+    state: present
+
+
+- name: Set up Redis 6 repo
+  become: yes
+  apt_repository:
+    repo: deb https://packages.redis.io/deb buster main
+    state: present
+    update_cache: yes
+
+
+- name: Install Redis
+  become: yes
+  apt:
+    name: redis-server
+  when: "'redis-server' not in ansible_facts.packages"
+
+
+- name: Enable Redis
+  become: yes
+  systemd:
+    name: redis-server
+    enabled: yes
+  when: "'redis-server' not in ansible_facts.packages"
+
+
+- name: Create redis conf file
+  become: yes
+  template:
+    src: ./roles/redis/files/redis.conf
+    dest: /etc/redis/redis.conf
+  register: conf
+
+- name: Stop Redis server
+  become: yes
+  systemd:
+    name: redis-server
+    state: stopped
+  when: conf.changed
+
+
+- name: Start Redis server
+  become: yes
+  systemd:
+    name: redis-server
+    state: started
+  when: conf.changed

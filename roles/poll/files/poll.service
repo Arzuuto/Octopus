@@ -1,0 +1,13 @@
+[Unit]
+Description= Poll service
+After=network.target
+
+[Service]
+Environment=REDIS_HOST={{redis_host}}
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 /home/vagrant/poll/app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
